@@ -24,8 +24,6 @@ fn main() {
     let env_vars = env::vars().collect::<HashMap<String, String>>();
     let github_auth = env_vars.get("GODE_CHECK_GITHUB_TOKEN").map(|token| format!("Bearer {token}")).unwrap_or_default();
 
-    println!("github token: {github_auth}");
-
     let repo = format!("{}/{}", parts[3], parts[4]);
     let api_url = format!("https://api.github.com/repos/{repo}");
     let tag = parts[7];
