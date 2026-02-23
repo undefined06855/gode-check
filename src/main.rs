@@ -6,6 +6,7 @@ use std::fs;
 use std::io::Cursor;
 use std::path::PathBuf;
 use std::process;
+use std::collections::HashMap;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -20,6 +21,11 @@ fn main() {
         process::exit(1);
     }
 
+    let env_vars = env::vars().collect::<HashMap<String, String>>();
+    let github_auth = env_vars.get("GODE_CHECK_GITHUB_TOKEN").map(|token| format!("Bearer {token}")).unwrap_or_default();
+
+    println!("github token: {github_auth}");
+
     let repo = format!("{}/{}", parts[3], parts[4]);
     let api_url = format!("https://api.github.com/repos/{repo}");
     let tag = parts[7];
@@ -30,6 +36,7 @@ fn main() {
         .get(&format!("{api_url}/releases/tags/{tag}"))
         .header("Accept", "application/json")
         .header("User-Agent", "gode-check")
+        .header("Authorization", github_auth.clone())
         .send()
         .unwrap_or_else(|e| {
             eprintln!("{}", format!("Error fetching release: {:?}", e).red());
@@ -51,6 +58,7 @@ fn main() {
             .get(&format!("{api_url}/git/refs/tags/{tag}"))
             .header("Accept", "application/json")
             .header("User-Agent", "gode-check")
+            .header("Authorization", github_auth.clone())
             .send()
             .unwrap_or_else(|e| {
                 eprintln!("{}", format!("Error fetching tags: {:?}", e).red());
@@ -67,6 +75,7 @@ fn main() {
                 .get(&format!("{api_url}/git/tags/{tag_sha}"))
                 .header("Accept", "application/json")
                 .header("User-Agent", "gode-check")
+                .header("Authorization", github_auth.clone())
                 .send()
                 .unwrap_or_else(|e| {
                     eprintln!("{}", format!("Error fetching tag object: {:?}", e).red());
@@ -89,6 +98,7 @@ fn main() {
         .get(&format!("{api_url}/actions/artifacts"))
         .header("Accept", "application/json")
         .header("User-Agent", "gode-check")
+        .header("Authorization", github_auth.clone())
         .send()
         .unwrap_or_else(|e| {
             eprintln!("{}", format!("Error fetching artifacts: {:?}", e).red());
@@ -168,6 +178,7 @@ fn main() {
             .get(&format!("{api_url}/actions/runs/{workflow_run_id}"))
             .header("Accept", "application/json")
             .header("User-Agent", "gode-check")
+            .header("Authorization", github_auth.clone())
             .send()
             .unwrap_or_else(|e| {
                 eprintln!("{}", format!("Error fetching workflow run: {:?}", e).red());
